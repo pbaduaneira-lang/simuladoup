@@ -3,6 +3,8 @@ import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
 });

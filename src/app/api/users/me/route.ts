@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic';
+
 // No futuro pegaremos o userId da sessão. Por enquanto usamos o ID que vem no corpo para manter o mock
 export async function PATCH(request: Request) {
   try {
