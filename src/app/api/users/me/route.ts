@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // No futuro pegaremos o userId da sessão. Por enquanto usamos o ID que vem no corpo para manter o mock
 export async function PATCH(request: Request) {

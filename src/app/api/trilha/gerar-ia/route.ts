@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
-
-const prisma = new PrismaClient();
 const openai = new OpenAI(); // Usa process.env.OPENAI_API_KEY automaticamente
 
 export async function POST(req: Request) {
