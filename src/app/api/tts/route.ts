@@ -6,7 +6,7 @@ import crypto from 'crypto';
 export const dynamic = 'force-dynamic';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
+  apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
 });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';

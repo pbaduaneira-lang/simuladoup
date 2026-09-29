@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
 
 export const dynamic = 'force-dynamic';
-const openai = new OpenAI(); // Usa process.env.OPENAI_API_KEY automaticamente
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
+});
 
 export async function POST(req: Request) {
   try {
