@@ -4,12 +4,12 @@ import OpenAI from "openai";
 
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
-});
-
 export async function POST(req: Request) {
   try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
+    });
+
     const body = await req.json().catch(() => ({}));
     const userId = body.userId || "b6b43411-fe62-4966-ac48-1cfd906d2e85";
 

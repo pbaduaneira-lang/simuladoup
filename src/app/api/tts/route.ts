@@ -5,16 +5,16 @@ import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
-});
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 export async function POST(request: Request) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://sosqfvynxtdhbrhgnhce.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ylktM43AK48uAORdAiAs6Q_T7gxEDae';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build',
+    });
+
     const { explicacao } = await request.json();
 
     if (!explicacao) {
