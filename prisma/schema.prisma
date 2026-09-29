@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  nomeCompleto String?
+  ondeEstuda   String?
+  cidade       String?
+  endereco     String?
+  telefone     String?
+  meta         String?  // Ex: "ENEM", "Concurso Prefeitura"
+  xp           Int      @default(0)
+  streak       Int      @default(0)
+  plano        String   @default("FREE") // "FREE" or "PRO"
+  createdAt    DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  answers               UserAnswer[]
+  planosEstudo          PlanoEstudo[]
+  dailyGoals            DailyGoal[]
+  userPillInteractions  UserPillInteraction[]
+  likes                 QuestionLike[]
+  comments              QuestionComment[]
+  reports               QuestionReport[]
+  simulados             Simulado[]
+  trilhas               TrilhaDaSemana[]
+}
+
+model Question {
+  id             String   @id @default(uuid())
+  materia        String
+  dificuldade    String   // "Fácil", "Médio", "Difícil"
+  enunciado      String
+  alternativas   String   // JSON stringified array of alternatives
+  correta        Int      // Index of the correct alternative (0-3)
+  explicacaoIA   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userAnswers    UserAnswer[]
+  likes          QuestionLike[]
+  comments       QuestionComment[]
+  reports        QuestionReport[]
+}
+
+model UserAnswer {
+  id         String   @id @default(uuid())
+  userId     String
+  questionId String
+  acertou    Boolean
+  tempo      Int      // tempo em segundos
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionLike {
+  id         String   @id @default(uuid())
+  userId     String
+  questionId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+}
+
+model QuestionComment {
+  id         String   @id @default(uuid())
+  userId     String
+  questionId String
+  text       String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionReport {
+  id         String   @id @default(uuid())
+  userId     String
+  questionId String
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model PlanoEstudo {
+  id          String   @id @default(uuid())
+  userId      String
+  focoDoDia   String
+  criadoPorIA Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BattleRoom {
+  id        String   @id @default(uuid())
+  player1Id String
+  player2Id String?
+  questions String   // JSON com as 5 questoes da batalha
+  scores    String   // JSON com o estado dos scores { p1: int, p2: int }
+  status    String   @default("waiting") // 'waiting' | 'playing' | 'finished'
+  createdAt DateTime @default(now())
+}
+
+model DailyGoal {
+  id        String   @id @default(uuid())
+  userId    String
+  date      String   // Formato YYYY-MM-DD
+  count     Int      @default(0)
+  completed Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, date])
+}
+
+model Pill {
+  id        String   @id @default(uuid())
+  titulo    String
+  conteudo  String
+  materia   String
+  tag       String
+
+  interactions UserPillInteraction[]
+}
+
+model UserPillInteraction {
+  id        String   @id @default(uuid())
+  userId    String
+  pillId    String
+  sabia     Boolean
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pill      Pill     @relation(fields: [pillId], references: [id], onDelete: Cascade)
+}
+
+model Simulado {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // "PERSONAL" | "GERAL"
+  questions String   // JSON com os IDs ou objetos das questões
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TrilhaDaSemana {
+  id        String   @id @default(uuid())
+  userId    String
+  semana    String   // Ex: "2026-W37"
+  trilha    String   // JSON
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, semana])
+}
+
