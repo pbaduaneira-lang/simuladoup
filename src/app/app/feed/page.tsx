@@ -13,6 +13,44 @@ import { ActionModal } from "@/components/ActionModals";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+function parseEnunciado(raw: string) {
+  if (!raw) return { tag: null, textoApoio: null, comando: "" };
+
+  // Extrai badge da prova ex: [ENEM 2025 - Q6]
+  const tagMatch = raw.match(/^(\[[^\]]+\])\s*/);
+  const tag = tagMatch ? tagMatch[1] : null;
+  const content = tagMatch ? raw.slice(tagMatch[0].length).trim() : raw.trim();
+
+  // Se houver quebras de linha explícitas (ex: \n\n)
+  if (content.includes("\n\n")) {
+    const parts = content.split("\n\n");
+    const comando = parts.pop();
+    const textoApoio = parts.join("\n\n");
+    return { tag, textoApoio, comando: comando || "" };
+  }
+
+  // Tenta localizar divisões comuns de comando no ENEM
+  const splitKeywords = [
+    "Nesse texto,", "No texto,", "Nesse trecho,", "A partir do texto,", 
+    "Com base no texto,", "Considerando o texto,", "O texto apresentado,", 
+    "De acordo com o texto,", "Na crônica,", "Nessa crônica,", "Ao retratar"
+  ];
+
+  for (const kw of splitKeywords) {
+    const idx = content.lastIndexOf(kw);
+    if (idx > 120) {
+      return {
+        tag,
+        textoApoio: content.slice(0, idx).trim(),
+        comando: content.slice(idx).trim()
+      };
+    }
+  }
+
+  return { tag, textoApoio: null, comando: content };
+}
 
 function FeedContent() {
   const searchParams = useSearchParams();
@@ -61,8 +99,16 @@ function FeedContent() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // TEST USER (Inserido no banco)
-  const TEST_USER_ID = "b6b43411-fe62-4966-ac48-1cfd906d2e85";
+  // Usuário autenticado da sessão (com fallback para compatibilidade)
+  const [currentUserId, setCurrentUserId] = useState<string>("b6b43411-fe62-4966-ac48-1cfd906d2e85");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        setCurrentUserId(session.user.id);
+      }
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -91,7 +137,7 @@ function FeedContent() {
       const res = await fetch(`/api/questions/${q.id}/like`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: TEST_USER_ID })
+        body: JSON.stringify({ userId: currentUserId })
       });
       const data = await res.json();
       
@@ -118,7 +164,7 @@ function FeedContent() {
       await fetch(`/api/questions/${q.id}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: TEST_USER_ID, text })
+        body: JSON.stringify({ userId: currentUserId, text })
       });
       setCommentModalOpen(false);
     } catch (e) {
@@ -134,7 +180,7 @@ function FeedContent() {
       await fetch(`/api/questions/${q.id}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: TEST_USER_ID, reason })
+        body: JSON.stringify({ userId: currentUserId, reason })
       });
       setReportModalOpen(false);
     } catch (e) {
@@ -154,7 +200,7 @@ function FeedContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: TEST_USER_ID,
+          userId: currentUserId,
           questionId: q.id,
           selectedOption: index,
           tempo: 15 // Mock de tempo por enquanto
@@ -279,12 +325,38 @@ function FeedContent() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col gap-3 lg:gap-4"
               >
-              {/* Card do Enunciado */}
-              <div className="bg-card/50 border border-border/80 rounded-xl p-3.5 lg:p-4 shadow-sm max-h-[32vh] overflow-y-auto">
-                <h2 className="text-xs sm:text-sm lg:text-[15px] font-medium leading-relaxed text-foreground/90">
-                  {q.enunciado}
-                </h2>
-              </div>
+              {/* Card do Enunciado e Texto de Apoio */}
+              {(() => {
+                const parsed = parseEnunciado(q.enunciado);
+                return (
+                  <div className="bg-card/75 border border-border/80 rounded-2xl p-4 lg:p-5 shadow-sm max-h-[46vh] lg:max-h-[50vh] overflow-y-auto space-y-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {parsed.tag && (
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+                          {parsed.tag.replace(/[\[\]]/g, '')}
+                        </span>
+                      )}
+                      {parsed.textoApoio && (
+                        <span className="text-[11px] font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
+                          📖 Texto para Interpretação
+                        </span>
+                      )}
+                    </div>
+
+                    {parsed.textoApoio && (
+                      <div className="bg-muted/40 border-l-2 border-primary/70 pl-3.5 py-2.5 pr-2 rounded-r-xl">
+                        <p className="text-xs sm:text-[13.5px] leading-relaxed text-foreground/85 whitespace-pre-wrap font-sans">
+                          {parsed.textoApoio}
+                        </p>
+                      </div>
+                    )}
+
+                    <h2 className="text-xs sm:text-sm lg:text-[15px] font-bold leading-relaxed text-foreground">
+                      {parsed.comando}
+                    </h2>
+                  </div>
+                );
+              })()}
               
               {/* Lista de Alternativas */}
               <div className="flex flex-col gap-2">

@@ -44,15 +44,16 @@ function LoginContent() {
       if (isLogin) {
         // Log in
         const { error: authError } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         });
         if (authError) throw authError;
         router.push("/app");
       } else {
-        // Sign up
+        // Sign up no Supabase Auth
+        const cleanEmail = email.trim().toLowerCase();
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
             data: {
@@ -64,27 +65,65 @@ function LoginContent() {
             }
           }
         });
-        if (signUpError) throw signUpError;
-        
+
+        if (signUpError) {
+          if (signUpError.message?.toLowerCase().includes("user already registered")) {
+            throw new Error("Este e-mail já está cadastrado. Alterne para a aba 'Entrar' para acessar sua conta.");
+          }
+          throw signUpError;
+        }
+
+        const userId = data.user?.id;
+        if (!userId) {
+          throw new Error("Não foi possível obter o identificador da conta gerada.");
+        }
+
         // Chamada para rota de API que vai criar o usuário no Prisma (Next steps)
-        await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: data.user?.id,
-            email,
-            nomeCompleto,
-            ondeEstuda,
-            cidade,
-            endereco,
-            telefone,
-          }),
-        });
+        try {
+          const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: userId,
+              email: cleanEmail,
+              nomeCompleto,
+              ondeEstuda,
+              cidade,
+              endereco,
+              telefone,
+            }),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.error("Falha ao sincronizar com banco local:", errData);
+          }
+        } catch (apiErr: any) {
+          console.warn("Aviso ao registrar usuário no banco local:", apiErr);
+        }
+
+        // Garante que a sessão esteja ativa no navegador
+        if (!data.session) {
+          await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
+          });
+        }
 
         router.push("/app");
       }
     } catch (err: any) {
-      setError(err.message || "Ocorreu um erro inesperado.");
+      console.error("Erro na autenticação:", err);
+      const msg = err.message || "";
+      if (msg.toLowerCase().includes("failed to fetch")) {
+        setError(
+          "Falha de conexão (Failed to fetch). Verifique se o servidor de desenvolvimento está rodando (porta 3005) ou se extensões do navegador como AdBlock ou Brave Shields estão bloqueando requisições ao Supabase."
+        );
+      } else if (msg.toLowerCase().includes("invalid login credentials")) {
+        setError("E-mail ou senha incorretos.");
+      } else {
+        setError(msg || "Ocorreu um erro inesperado.");
+      }
     } finally {
       setLoading(false);
     }
