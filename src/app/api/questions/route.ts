@@ -42,8 +42,20 @@ export async function GET(req: Request) {
       questoes = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
     }
 
+    // Blindagem de segurança: entrega apenas questões 100% textuais, verificadas e sem recursos visuais ausentes
+    const safeQuestions = questoes.filter(q => {
+      if (!q.enunciado || q.enunciado.length < 70) return false;
+      const el = q.enunciado.toLowerCase();
+      if (el.includes("o gráfico") || el.includes("na figura") || el.includes("da figura") || el.includes("a tirinha") || el.includes("a charge") || el.includes("o mapa")) {
+        return false;
+      }
+      return true;
+    });
+
+    const targetQuestoes = safeQuestions.length > 0 ? safeQuestions : questoes;
+
     // O Frontend NÃO recebe 'correta' nem 'explicacaoIA' para garantir integridade e segurança (Server-Side Validation)
-    const formattedQuestoes = questoes.map(q => ({
+    const formattedQuestoes = targetQuestoes.map(q => ({
       id: q.id,
       materia: q.materia,
       dificuldade: q.dificuldade,
