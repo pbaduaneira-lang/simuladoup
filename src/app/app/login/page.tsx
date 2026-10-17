@@ -153,8 +153,10 @@ function Login() {
           </button>
         </form>
         <p className="muted small-text">
-          Ao continuar, você concorda com os{" "}
-          <Link href="/app/termos">termos e a política de privacidade</Link>.
+          Ao criar uma conta, você concorda com os{" "}
+          <Link href="/app/termos">termos de uso</Link>. Conheça a{" "}
+          <Link href="/privacidade">Política de Privacidade</Link> e saiba como{" "}
+          <Link href="/excluir-conta">excluir sua conta</Link>.
         </p>
       </section>
     </main>

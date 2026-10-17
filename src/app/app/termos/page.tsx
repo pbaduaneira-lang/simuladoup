@@ -3,8 +3,28 @@ export default function Terms() {
   return (
     <main className="page prose-page">
       <span className="eyebrow">TRANSPARÊNCIA</span>
-      <h1>Termos e privacidade</h1>
+      <h1>Termos de uso</h1>
       <p>Atualizado em 17 de outubro de 2026.</p>
+      <p>
+        O SimuladoUp é um serviço de estudo para o ENEM sob responsabilidade da{" "}
+        <strong>Estrela Incorporadora Ltda.</strong> Para atendimento, escreva
+        para{" "}
+        <a className="text-link" href="mailto:estrelaincorporadora@gmail.com">
+          estrelaincorporadora@gmail.com
+        </a>
+        .
+      </p>
+      <p>
+        O tratamento de dados está descrito na{" "}
+        <Link className="text-link" href="/privacidade">
+          Política de Privacidade
+        </Link>
+        . As instruções de exclusão, inclusive sem login, estão na página{" "}
+        <Link className="text-link" href="/excluir-conta">
+          Excluir conta do SimuladoUp
+        </Link>
+        .
+      </p>
       <h2>Uso gratuito</h2>
       <p>
         Esta versão do SimuladoUp é gratuita. Não solicitamos cartão e não há
@@ -17,39 +37,28 @@ export default function Terms() {
         oficiais do INEP. O SimuladoUp não é afiliado ao INEP e não garante
         aprovação ou reprodução da nota oficial do ENEM.
       </p>
-      <h2>Sem conta</h2>
+      <h2>Conta e progresso</h2>
       <p>
-        Você pode praticar sem cadastro. O histórico local fica no armazenamento
-        do navegador e pode ser perdido ao limpar seus dados ou trocar de
-        aparelho. Esse histórico não participa do ranking.
-      </p>
-      <h2>Com conta</h2>
-      <p>
-        Nome, e-mail, credenciais protegidas e sessões são usados para
-        autenticação. Respostas, tempos de prática e versões das questões são
-        registrados para manter seu progresso e calcular resultados. Cidade e
-        escola são opcionais. Não pedimos endereço ou telefone no cadastro. O
-        banco utilizado é Turso; não usamos respostas dos estudantes para
-        chamadas pagas de IA nesta versão.
+        Você pode praticar sem cadastro; nesse modo, o histórico fica no
+        navegador e pode ser perdido ao limpar os dados do site ou trocar de
+        aparelho. Com conta, o progresso é registrado no serviço. Mantenha sua
+        senha em sigilo e use informações próprias no cadastro.
       </p>
       <h2>Ranking e desafios</h2>
       <p>
-        O ranking é opcional e exibe somente o primeiro nome e a pontuação. Nos
-        desafios, os participantes compartilham uma sala por link e veem os
-        pontos e o andamento do outro. Evite divulgar links de salas privadas.
+        A participação no ranking é opcional. Nos desafios, o link permite
+        convidar outro participante; compartilhe-o apenas com quem deseja
+        convidar. Evite inserir dados de terceiros nos relatos sobre questões.
       </p>
       <h2>Suas escolhas</h2>
       <p>
-        Você pode editar seus dados no perfil, sair da conta ou excluir a conta
-        e seus registros pelo mesmo local. Não informe dados pessoais de
-        terceiros. Para menores de idade, recomendamos a participação de um
-        responsável nas decisões sobre criação de conta e compartilhamento de
-        dados.
-      </p>
-      <h2>Leitura em voz alta</h2>
-      <p>
-        A reprodução usa o recurso de voz do navegador. As vozes disponíveis
-        dependem do dispositivo e do navegador.
+        Você pode editar o perfil, sair da conta e solicitar sua exclusão.
+        Estudantes e responsáveis podem entrar em contato para esclarecer o
+        funcionamento e o tratamento de dados. Saiba mais na{" "}
+        <Link className="text-link" href="/privacidade">
+          Política de Privacidade
+        </Link>
+        .
       </p>
       <Link className="button quiet" href="/app">
         Voltar ao estudo

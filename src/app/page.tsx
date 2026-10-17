@@ -115,7 +115,11 @@ export default function Landing() {
       </main>
       <footer className="landing-footer">
         <span>SimuladoUp · Aprendizado acessível, um passo de cada vez.</span>
-        <Link href="/app/termos">Termos e privacidade</Link>
+        <nav aria-label="Informações do serviço">
+          <Link href="/privacidade">Política de Privacidade</Link>
+          <Link href="/excluir-conta">Excluir conta</Link>
+          <Link href="/app/termos">Termos de uso</Link>
+        </nav>
       </footer>
     </div>
   );

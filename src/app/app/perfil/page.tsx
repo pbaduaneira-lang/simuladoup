@@ -216,9 +216,17 @@ export default function Profile() {
           bloqueados por plano.
         </p>
       </section>
-      <Link className="text-link" href="/app/termos">
-        Termos e privacidade
-      </Link>
+      <nav className="legal-links" aria-label="Privacidade e atendimento">
+        <Link className="text-link" href="/privacidade">
+          Política de Privacidade
+        </Link>
+        <Link className="text-link" href="/excluir-conta">
+          Excluir conta e solicitar ajuda
+        </Link>
+        <Link className="text-link" href="/app/termos">
+          Termos de uso
+        </Link>
+      </nav>
     </main>
   );
 }
