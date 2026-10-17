@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "./auth";
+import { serviceDiagnostic } from "./service-diagnostics.mjs";
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -49,10 +50,7 @@ export function failure(error: unknown) {
       { success: false, error: error.message },
       { status: error.status },
     );
-  console.error(
-    "Serviço indisponível:",
-    error instanceof Error ? error.name : "Error",
-  );
+  console.error(JSON.stringify(serviceDiagnostic(error)));
   return NextResponse.json(
     {
       success: false,
