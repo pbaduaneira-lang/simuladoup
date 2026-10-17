@@ -1,3 +1,2 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-prisma.question.count().then(console.log).finally(() => prisma.$disconnect());
+console.error('Script antigo desativado para proteger questões e histórico. Use npm run catalogue:check e npm run db:migrate.');
+process.exitCode = 1;

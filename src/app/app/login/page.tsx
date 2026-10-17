@@ -1,277 +1,169 @@
 "use client";
-
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2, Mail, Lock, User, School, MapPin, Building2, Phone } from "lucide-react";
 import Link from "next/link";
-
-function LoginContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
-  
-  const [isLogin, setIsLogin] = useState(initialMode === "login");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Form states
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nomeCompleto, setNomeCompleto] = useState("");
-  const [ondeEstuda, setOndeEstuda] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [endereco, setEndereco] = useState("");
-  const [telefone, setTelefone] = useState("");
-
-  // Redireciona automaticamente se já estiver logado
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.push("/app");
-      }
-    });
-  }, [router]);
-
-  const handleAuth = async (e: React.FormEvent) => {
+import { ArrowLeft, ArrowRight, BookOpen, Loader2 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+function Login() {
+  const router = useRouter(),
+    params = useSearchParams();
+  const [signup, setSignup] = useState(params.get("mode") === "signup"),
+    [name, setName] = useState(""),
+    [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+    if (busy) return;
+    setBusy(true);
+    setError("");
     try {
-      if (isLogin) {
-        // Log in
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
-        if (authError) throw authError;
-        router.push("/app");
-      } else {
-        // Sign up no Supabase Auth
-        const cleanEmail = email.trim().toLowerCase();
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: cleanEmail,
-          password,
-          options: {
-            data: {
-              nomeCompleto,
-              ondeEstuda,
-              cidade,
-              endereco,
-              telefone,
-            }
-          }
-        });
-
-        if (signUpError) {
-          if (signUpError.message?.toLowerCase().includes("user already registered")) {
-            throw new Error("Este e-mail já está cadastrado. Alterne para a aba 'Entrar' para acessar sua conta.");
-          }
-          throw signUpError;
-        }
-
-        const userId = data.user?.id;
-        if (!userId) {
-          throw new Error("Não foi possível obter o identificador da conta gerada.");
-        }
-
-        // Chamada para rota de API que vai criar o usuário no Prisma (Next steps)
-        try {
-          const res = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: userId,
-              email: cleanEmail,
-              nomeCompleto,
-              ondeEstuda,
-              cidade,
-              endereco,
-              telefone,
-            }),
-          });
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error("Falha ao sincronizar com banco local:", errData);
-          }
-        } catch (apiErr: any) {
-          console.warn("Aviso ao registrar usuário no banco local:", apiErr);
-        }
-
-        // Garante que a sessão esteja ativa no navegador
-        if (!data.session) {
-          await supabase.auth.signInWithPassword({
-            email: cleanEmail,
-            password,
-          });
-        }
-
-        router.push("/app");
-      }
-    } catch (err: any) {
-      console.error("Erro na autenticação:", err);
-      const msg = err.message || "";
-      if (msg.toLowerCase().includes("failed to fetch")) {
-        setError(
-          "Falha de conexão (Failed to fetch). Verifique se o servidor de desenvolvimento está rodando (porta 3005) ou se extensões do navegador como AdBlock ou Brave Shields estão bloqueando requisições ao Supabase."
+      const input = { email: email.trim().toLowerCase(), password };
+      const result = signup
+        ? await authClient.signUp.email({ ...input, name: name.trim() })
+        : await authClient.signIn.email(input);
+      if (result.error)
+        throw Error(
+          result.error.status === 429
+            ? "Muitas tentativas. Aguarde um minuto e tente novamente."
+            : result.error.status === 503
+              ? "O serviço de contas está indisponível. Você pode estudar sem conta."
+              : signup
+                ? "Não foi possível criar a conta. Confira os dados ou tente entrar."
+                : "E-mail ou senha incorretos.",
         );
-      } else if (msg.toLowerCase().includes("invalid login credentials")) {
-        setError("E-mail ou senha incorretos.");
-      } else {
-        setError(msg || "Ocorreu um erro inesperado.");
-      }
+      router.push("/app");
+      router.refresh();
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível conectar. Tente novamente.",
+      );
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
-  };
-
+  }
   return (
-    <div className="min-h-screen bg-[#0A0A0B] flex overflow-hidden font-sans text-white">
-      {/* Lado Esquerdo - Banner Decorativo (Hidden no Mobile) */}
-      <div className="hidden lg:flex flex-1 relative bg-gradient-to-br from-[#7C3AED] to-[#22D3EE] items-center justify-center p-12 overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/20 blur-[120px] rounded-full" />
-        
-        <div className="relative z-10 max-w-xl">
-          <Link href="/" className="inline-flex items-center gap-2 mb-12 bg-white/10 px-4 py-2 rounded-full backdrop-blur hover:bg-white/20 transition-colors">
-            <ArrowRight className="w-4 h-4 rotate-180" /> Voltar para o início
-          </Link>
-          <h1 className="text-5xl font-black text-white leading-tight mb-6">
-            O seu futuro não precisa ser chato.
-          </h1>
-          <p className="text-xl text-white/90 font-medium mb-12">
-            Junte-se a milhares de estudantes que trocaram o feed infinito do TikTok por XP, Rankings e Batalhas Épicas.
-          </p>
-          
-          <div className="flex gap-4">
-            <div className="glass bg-white/10 backdrop-blur-md p-4 rounded-2xl flex items-center gap-3 border border-white/20">
-              <span className="text-3xl">⚔️</span>
-              <div>
-                <p className="font-bold">Batalhas ao vivo</p>
-                <p className="text-sm text-white/70">Desafie amigos</p>
-              </div>
-            </div>
-            <div className="glass bg-white/10 backdrop-blur-md p-4 rounded-2xl flex items-center gap-3 border border-white/20">
-              <span className="text-3xl">🔥</span>
-              <div>
-                <p className="font-bold">Ofensiva Diária</p>
-                <p className="text-sm text-white/70">Mantenha a chama</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Lado Direito - Formulário */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 relative h-screen overflow-y-auto">
-        <Link href="/" className="lg:hidden absolute top-6 left-6 text-muted-foreground flex items-center gap-2">
-          <ArrowRight className="w-4 h-4 rotate-180" /> Voltar
+    <main className="auth-page">
+      <section className="auth-story">
+        <Link href="/" className="brand">
+          <img src="/logo.png" alt="" />
+          Simulado<span>Up</span>
         </Link>
-
-        <div className="w-full max-w-md my-auto">
-          <div className="flex justify-center mb-8">
-            <img src="/logo.png" alt="Logo" className="w-12 h-12 rounded-xl object-contain" />
-          </div>
-
-          <h2 className="text-3xl font-black mb-2 text-center">
-            {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
-          </h2>
-          <p className="text-[#A1A1AA] text-center mb-8">
-            {isLogin ? "Pronto para aumentar seu XP hoje?" : "Preencha seus dados para começar a batalhar."}
-          </p>
-
-          {/* Toggle Login/Signup */}
-          <div className="flex p-1 bg-[#141417] rounded-xl mb-8 border border-[#1F1F23]">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isLogin ? 'bg-primary text-white shadow-lg' : 'text-[#A1A1AA] hover:text-white'}`}
-            >
-              Entrar
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${!isLogin ? 'bg-primary text-white shadow-lg' : 'text-[#A1A1AA] hover:text-white'}`}
-            >
-              Criar Conta
-            </button>
-          </div>
-
-          <form onSubmit={handleAuth} className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input required={!isLogin} type="text" placeholder="Nome Completo" value={nomeCompleto} onChange={(e) => setNomeCompleto(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-                  </div>
-                  <div className="relative">
-                    <School className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input required={!isLogin} type="text" placeholder="Onde estuda? (Ex: Colégio X)" value={ondeEstuda} onChange={(e) => setOndeEstuda(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <input required={!isLogin} type="text" placeholder="Endereço" value={endereco} onChange={(e) => setEndereco(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-                    </div>
-                    <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <input required={!isLogin} type="text" placeholder="Cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input required={!isLogin} type="tel" placeholder="Telefone (WhatsApp)" value={telefone} onChange={(e) => setTelefone(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input required type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-            </div>
-
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input required type="password" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#141417] border border-[#1F1F23] rounded-xl h-12 pl-10 pr-4 focus:outline-none focus:border-primary transition-colors" />
-            </div>
-
-            {error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-3 bg-red-500/10 border border-red-500/30 text-red-500 rounded-xl text-sm text-center">
-                {error}
-              </motion.div>
-            )}
-
-            <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-primary to-cyan-500 hover:opacity-90 text-white font-black h-12 rounded-xl mt-4 shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isLogin ? "ENTRAR NO SIMULADOUP" : "CRIAR CONTA E JOGAR")}
-            </Button>
-          </form>
-
-          <p className="text-center text-[#A1A1AA] text-xs mt-8">
-            Ao continuar, você concorda com nossos <a href="#" className="underline hover:text-white">Termos de Uso</a> e <a href="#" className="underline hover:text-white">Política de Privacidade</a>.
-          </p>
+        <BookOpen size={70} />
+        <h1>
+          Seu espaço
+          <br />
+          para ir <em>além.</em>
+        </h1>
+        <p>
+          Guarde suas conquistas, acompanhe seu progresso e construa uma rotina
+          de aprendizado.
+        </p>
+        <span className="pill mint">Sempre gratuito nesta versão</span>
+      </section>
+      <section className="auth-form">
+        <Link className="text-link" href="/app">
+          <ArrowLeft size={16} /> Continuar sem conta
+        </Link>
+        <h2>{signup ? "Um novo começo." : "Que bom ter você aqui."}</h2>
+        <p>
+          {signup
+            ? "Crie sua conta gratuita e salve seu progresso."
+            : "Entre para continuar a sua jornada."}
+        </p>
+        <div className="tabs">
+          <button
+            type="button"
+            aria-pressed={!signup}
+            onClick={() => {
+              setSignup(false);
+              setError("");
+            }}
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            aria-pressed={signup}
+            onClick={() => {
+              setSignup(true);
+              setError("");
+            }}
+          >
+            Criar conta
+          </button>
         </div>
-      </div>
-    </div>
+        <form onSubmit={submit}>
+          {signup && (
+            <label>
+              Como podemos chamar você?
+              <input
+                autoComplete="name"
+                required
+                minLength={2}
+                maxLength={120}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+          )}
+          <label>
+            E-mail
+            <input
+              type="email"
+              autoComplete="email"
+              required
+              maxLength={254}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
+          <label>
+            Senha
+            <input
+              type="password"
+              autoComplete={signup ? "new-password" : "current-password"}
+              required
+              minLength={signup ? 12 : 1}
+              maxLength={128}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+          {signup && (
+            <p className="muted small-text">
+              Use pelo menos 12 caracteres. Não pedimos endereço nem telefone.
+            </p>
+          )}
+          {error && (
+            <div className="error-box" role="alert">
+              {error}
+            </div>
+          )}
+          <button className="button primary" disabled={busy}>
+            {busy ? (
+              <Loader2 className="spin" size={18} />
+            ) : (
+              <ArrowRight size={18} />
+            )}{" "}
+            {signup ? "Criar minha conta" : "Entrar e continuar"}
+          </button>
+        </form>
+        <p className="muted small-text">
+          Ao continuar, você concorda com os{" "}
+          <Link href="/app/termos">termos e a política de privacidade</Link>.
+        </p>
+      </section>
+    </main>
   );
 }
-
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0A0A0B]" />}>
-      <LoginContent />
+    <Suspense fallback={<main className="page empty">Carregando…</main>}>
+      <Login />
     </Suspense>
   );
 }

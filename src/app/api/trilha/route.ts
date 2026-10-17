@@ -1,33 +1,36 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-export const dynamic = 'force-dynamic';
-
+import { getDb } from "@/lib/database.mjs";
+import { questionById } from "@/lib/catalogue";
+import { failure, noStore, requireUser } from "@/lib/http";
+export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId") || "b6b43411-fe62-4966-ac48-1cfd906d2e85";
-
-  // Calcular a semana atual (Ex: "2026-W37")
-  const date = new Date();
-  const weekNumber = Math.ceil(Math.floor((date.getTime() - new Date(date.getFullYear(), 0, 1).getTime()) / (24 * 60 * 60 * 1000)) / 7);
-  const semana = `${date.getFullYear()}-W${weekNumber}`;
-
   try {
-    const trilha = await prisma.trilhaDaSemana.findUnique({
-      where: {
-        userId_semana: {
-          userId,
-          semana,
-        }
+    const user = await requireUser(req),
+      db = await getDb(),
+      rows = (
+        await db.execute({
+          sql: "SELECT questionId,COUNT(*) AS errors FROM answers WHERE userId=? AND acertou=0 GROUP BY questionId",
+          args: [user.id],
+        })
+      ).rows;
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      try {
+        const q = questionById(String(row.questionId));
+        counts.set(
+          q.materia,
+          (counts.get(q.materia) || 0) + Number(row.errors),
+        );
+      } catch {
+        /* Archived questions cannot enter the study feed. */
       }
-    });
-
-    if (!trilha) {
-      return NextResponse.json({ success: false, message: "Trilha não encontrada" }, { status: 404 });
     }
-
-    return NextResponse.json({ success: true, trilha: JSON.parse(trilha.trilha) });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    return noStore({
+      success: true,
+      trilha: [...counts]
+        .map(([name, errors]) => ({ name, errors }))
+        .sort((a, b) => b.errors - a.errors),
+    });
+  } catch (e) {
+    return failure(e);
   }
 }

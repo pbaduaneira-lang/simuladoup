@@ -1,49 +1,26 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-
-export const dynamic = 'force-dynamic';
-
+import { writeTransaction } from "@/lib/database.mjs";
+import { questionById } from "@/lib/catalogue";
+import { failure, HttpError, jsonBody, noStore, requireUser } from "@/lib/http";
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const questionId = params.id;
-    const body = await request.json();
-    const userId = body.userId;
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
-    }
-
-    // Check if like already exists
-    const existingLike = await prisma.questionLike.findUnique({
-      where: {
-        userId_questionId: {
-          userId,
-          questionId,
-        },
-      },
+    const user = await requireUser(req),
+      q = questionById((await params).id),
+      body = await jsonBody(req);
+    if (typeof body.liked !== "boolean" || Object.keys(body).length !== 1)
+      throw new HttpError(400, "Preferência inválida.");
+    await writeTransaction(async (tx) => {
+      await tx.execute({
+        sql: body.liked
+          ? "INSERT INTO question_likes(userId,questionId) VALUES(?,?) ON CONFLICT DO NOTHING"
+          : "DELETE FROM question_likes WHERE userId=? AND questionId=?",
+        args: [user.id, q.id],
+      });
     });
-
-    if (existingLike) {
-      // Unlike
-      await prisma.questionLike.delete({
-        where: { id: existingLike.id },
-      });
-      return NextResponse.json({ liked: false });
-    } else {
-      // Like
-      await prisma.questionLike.create({
-        data: {
-          userId,
-          questionId,
-        },
-      });
-      return NextResponse.json({ liked: true });
-    }
-  } catch (error) {
-    console.error('Error toggling like:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return noStore({ success: true, liked: body.liked });
+  } catch (e) {
+    return failure(e);
   }
 }

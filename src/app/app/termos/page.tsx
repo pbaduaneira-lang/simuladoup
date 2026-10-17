@@ -1,81 +1,59 @@
-"use client";
-
-import { ChevronLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-
-export default function TermosPage() {
-  const router = useRouter();
-
+import Link from "next/link";
+export default function Terms() {
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="min-h-screen bg-background flex flex-col pt-8 px-4 pb-24 font-sans text-foreground"
-    >
-      <div className="w-full max-w-2xl mx-auto">
-        <button 
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors mb-6 font-bold"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          Voltar
-        </button>
-
-        <h1 className="text-3xl font-black mb-2 text-white">Privacidade e Termos</h1>
-        <p className="text-muted-foreground mb-8 text-sm">Última atualização: Setembro de 2026</p>
-
-        <div className="space-y-6 text-muted-foreground text-sm leading-relaxed bg-[#1A1A1E] border-4 border-[#2A2A2E] p-6 rounded-2xl neo-brutalism">
-          
-          <section>
-            <h2 className="text-lg font-black text-white mb-2 uppercase tracking-wide">1. Introdução</h2>
-            <p>
-              Bem-vindo ao SimuladoUp. Ao utilizar nosso aplicativo, você concorda com estes termos. 
-              Nosso objetivo é fornecer a melhor experiência de estudos gamificada possível, respeitando a sua privacidade.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-black text-white mb-2 uppercase tracking-wide">2. Coleta de Dados</h2>
-            <p>
-              Coletamos as informações estritamente necessárias para o funcionamento do app, como:
-            </p>
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li>Seu nome e e-mail para identificação da conta.</li>
-              <li>Seu histórico de questões resolvidas para a Inteligência Artificial moldar o seu nível.</li>
-              <li>Informações básicas do dispositivo para corrigir bugs (Analytics).</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-black text-[#22D3EE] mb-2 uppercase tracking-wide">3. Segurança e Privacidade</h2>
-            <p>
-              Nunca venderemos seus dados. Todos os dados de cartão de crédito e informações de pagamento 
-              são criptografados e processados por provedores terceirizados ultra seguros. 
-              Não armazenamos números de cartão em nossos servidores.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-black text-[#7C3AED] mb-2 uppercase tracking-wide">4. Plano Premium (PRO)</h2>
-            <p>
-              Assinaturas do SimuladoUp PRO são cobradas de forma recorrente. 
-              Você pode cancelar a qualquer momento nas configurações da loja do seu celular 
-              (App Store ou Google Play). O cancelamento interrompe a cobrança do próximo ciclo, 
-              mas não gera reembolso do ciclo atual.
-            </p>
-          </section>
-
-        </div>
-
-        <Button 
-          onClick={() => router.back()}
-          className="w-full h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl mt-8 neo-brutalism"
-        >
-          Li e Concordo
-        </Button>
-      </div>
-    </motion.div>
+    <main className="page prose-page">
+      <span className="eyebrow">TRANSPARÊNCIA</span>
+      <h1>Termos e privacidade</h1>
+      <p>Atualizado em 17 de outubro de 2026.</p>
+      <h2>Uso gratuito</h2>
+      <p>
+        Esta versão do SimuladoUp é gratuita. Não solicitamos cartão e não há
+        assinaturas ou compras dentro do app.
+      </p>
+      <h2>Aprendizado e fontes</h2>
+      <p>
+        As questões disponibilizadas têm fonte e gabarito identificados. As
+        explicações de estudo são elaboradas pelo app e não são resoluções
+        oficiais do INEP. O SimuladoUp não é afiliado ao INEP e não garante
+        aprovação ou reprodução da nota oficial do ENEM.
+      </p>
+      <h2>Sem conta</h2>
+      <p>
+        Você pode praticar sem cadastro. O histórico local fica no armazenamento
+        do navegador e pode ser perdido ao limpar seus dados ou trocar de
+        aparelho. Esse histórico não participa do ranking.
+      </p>
+      <h2>Com conta</h2>
+      <p>
+        Nome, e-mail, credenciais protegidas e sessões são usados para
+        autenticação. Respostas, tempos de prática e versões das questões são
+        registrados para manter seu progresso e calcular resultados. Cidade e
+        escola são opcionais. Não pedimos endereço ou telefone no cadastro. O
+        banco utilizado é Turso; não usamos respostas dos estudantes para
+        chamadas pagas de IA nesta versão.
+      </p>
+      <h2>Ranking e desafios</h2>
+      <p>
+        O ranking é opcional e exibe somente o primeiro nome e a pontuação. Nos
+        desafios, os participantes compartilham uma sala por link e veem os
+        pontos e o andamento do outro. Evite divulgar links de salas privadas.
+      </p>
+      <h2>Suas escolhas</h2>
+      <p>
+        Você pode editar seus dados no perfil, sair da conta ou excluir a conta
+        e seus registros pelo mesmo local. Não informe dados pessoais de
+        terceiros. Para menores de idade, recomendamos a participação de um
+        responsável nas decisões sobre criação de conta e compartilhamento de
+        dados.
+      </p>
+      <h2>Leitura em voz alta</h2>
+      <p>
+        A reprodução usa o recurso de voz do navegador. As vozes disponíveis
+        dependem do dispositivo e do navegador.
+      </p>
+      <Link className="button quiet" href="/app">
+        Voltar ao estudo
+      </Link>
+    </main>
   );
 }

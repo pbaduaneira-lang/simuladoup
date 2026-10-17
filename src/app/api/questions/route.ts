@@ -1,71 +1,52 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-export const dynamic = 'force-dynamic';
-
+import { randomUUID } from "node:crypto";
+import {
+  approvedQuestions,
+  publicQuestion,
+  sampleQuestions,
+} from "@/lib/catalogue";
+import { createAttempt } from "@/lib/study";
+import { currentUser, failure, HttpError, noStore } from "@/lib/http";
+export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const simulado = searchParams.get("simulado");
-  const materia = searchParams.get("materia");
-
   try {
-    let questoes = [];
-
-    if (simulado && simulado !== "geral-do-dia") {
-      const simuladoRecord = await prisma.simulado.findUnique({
-        where: { id: simulado }
+    const params = new URL(req.url).searchParams,
+      subject = params.get("materia"),
+      simulado = params.get("simulado");
+    if (simulado && !["geral-do-dia", "enem-2022-oficial"].includes(simulado))
+      throw new HttpError(
+        404,
+        "Este simulado não está disponível no acervo revisado.",
+      );
+    if (params.get("catalogo") === "1") {
+      const all = approvedQuestions();
+      return noStore({
+        success: true,
+        total: all.length,
+        subjects: [...new Set(all.map((q) => q.materia))].map((name) => ({
+          name,
+          count: all.filter((q) => q.materia === name).length,
+        })),
+        years: [2022],
       });
-
-      if (simuladoRecord && simuladoRecord.questions) {
-        try {
-          const parsed = typeof simuladoRecord.questions === 'string' 
-            ? JSON.parse(simuladoRecord.questions) 
-            : simuladoRecord.questions;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            questoes = parsed;
-          }
-        } catch (e) {
-          console.error("Erro ao converter questões do simulado:", e);
-        }
-      }
-    } 
-    
-    if (questoes.length === 0) {
-      let allQuestions = await prisma.question.findMany();
-      
-      if (materia) {
-        const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        allQuestions = allQuestions.filter(q => normalizeString(q.materia) === normalizeString(materia));
-      }
-      
-      // Embaralha as questões para o feed e limita a 10
-      questoes = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
     }
-
-    // Blindagem de segurança: entrega apenas questões 100% textuais, verificadas e sem recursos visuais ausentes
-    const safeQuestions = questoes.filter(q => {
-      if (!q.enunciado || q.enunciado.length < 70) return false;
-      const el = q.enunciado.toLowerCase();
-      if (el.includes("o gráfico") || el.includes("na figura") || el.includes("da figura") || el.includes("a tirinha") || el.includes("a charge") || el.includes("o mapa")) {
-        return false;
-      }
-      return true;
+    const qs = sampleQuestions(
+      subject,
+      simulado === "enem-2022-oficial" ? 41 : 10,
+    );
+    if (!qs.length)
+      throw new HttpError(
+        404,
+        "Ainda não há questões revisadas para esta matéria.",
+      );
+    const user = await currentUser(req),
+      attemptId = user ? await createAttempt(user.id, qs) : randomUUID();
+    return noStore({
+      success: true,
+      questoes: qs.map(publicQuestion),
+      attemptId,
+      persisted: Boolean(user),
     });
-
-    const targetQuestoes = safeQuestions.length > 0 ? safeQuestions : questoes;
-
-    // O Frontend NÃO recebe 'correta' nem 'explicacaoIA' para garantir integridade e segurança (Server-Side Validation)
-    const formattedQuestoes = targetQuestoes.map(q => ({
-      id: q.id,
-      materia: q.materia,
-      dificuldade: q.dificuldade,
-      enunciado: q.enunciado,
-      alternativas: typeof q.alternativas === 'string' ? JSON.parse(q.alternativas) : q.alternativas
-    }));
-
-    return NextResponse.json({ success: true, questoes: formattedQuestoes });
-  } catch (error: any) {
-    console.error("Erro ao buscar questões:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (e) {
+    return failure(e);
   }
 }

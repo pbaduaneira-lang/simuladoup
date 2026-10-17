@@ -1,44 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SimuladoUp
 
-## Prisma Setup
+Aplicativo gratuito de prática do ENEM. Next.js 16, React 19, Turso/libSQL e Better Auth. Sem assinaturas, cartão, checkout ou serviços pagos de IA na execução do app.
 
-Before running the application, make sure to push the schema to the database:
+## Rodar localmente
 
-```bash
-npx prisma db push
-```
+Requer Node.js 22.18 ou superior (Node 24 recomendado).
 
-## Getting Started
-
-First, run the development server:
-
-```bash
+```powershell
+npm ci
+# Crie .env.local conforme a seção abaixo.
+npm run db:migrate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra http://localhost:3005. Sem `TURSO_DATABASE_URL`, o desenvolvimento utiliza `.data/simuladoup.db`. Esse arquivo é ignorado pelo Git. Em produção, o aplicativo exige Turso remoto para contas; nunca usa um arquivo temporário de hospedagem como banco persistente.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Exemplo de `.env.local` para desenvolvimento:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```dotenv
+BETTER_AUTH_URL=http://localhost:3005
+BETTER_AUTH_SECRET=SUBSTITUA_POR_UM_SEGREDO_ALEATORIO_DE_PELO_MENOS_32_CARACTERES
+```
 
-## Learn More
+Gere o segredo com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Não envie segredos para o chat nem os versione.
 
-To learn more about Next.js, take a look at the following resources:
+## Conectar Turso
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Use um banco dedicado a este app e configure:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```dotenv
+TURSO_DATABASE_URL=libsql://SEU-BANCO.turso.io
+TURSO_AUTH_TOKEN=SEU_TOKEN
+BETTER_AUTH_URL=https://SEU_DOMINIO
+BETTER_AUTH_SECRET=SEU_SEGREDO_ALEATORIO
+```
 
-## Deploy on Vercel
+As quatro variáveis são somente do servidor. Não use prefixo `NEXT_PUBLIC_`. Em produção, configure-as no provedor de hospedagem, reinicie a aplicação e verifique cadastro, login e persistência. `BETTER_AUTH_URL` precisa corresponder exatamente ao domínio usado no navegador; faz parte da proteção de origem.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`npm run db:migrate` aplica somente criações aditivas e idempotentes das tabelas. A primeira conexão do aplicativo também inicializa o esquema. Não executa exclusões ou seeds de questões antigas. O app gratuito não implica custo zero de hospedagem ou banco: acompanhe os limites do serviço escolhido.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Verificar
+
+```powershell
+npm run catalogue:check
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+Os testes HTTP iniciam um servidor e um banco SQLite/libSQL local exclusivo para testes. Cobrem login, tentativas, versões, todas as respostas do catálogo, reenvios, isolamento entre usuários, ranking opcional, desafios e exclusão com senha. Eles não certificam conectividade com um Turso remoto sem credenciais.
+
+## Acervo e segurança
+
+O único acervo servido é `src/data/approved-questions.json`: inicialmente 41 questões textuais de 2022, reconstruídas a partir do PDF original. Cada versão possui origem e hash. Letras e alternativas foram conferidas; explicações são material elaborado para estudo, não resoluções oficiais.
+
+Os arquivos de importação antigos ficam em quarentena. Os scripts antigos de seed e exclusão estão desativados. Veja [Acervo](docs/ACERVO.md), [Migração](docs/MIGRACAO-TURSO.md) e [Verificação](docs/VERIFICACAO.md).
+
+Em uma tentativa autenticada, cada resposta é única por tentativa e questão. Gabarito, alternativa escolhida, tempo e versão ficam registrados. XP é calculado no servidor e concedido apenas no primeiro acerto de cada questão no dia de São Paulo. Sem conta, a prática funciona e registra histórico apenas no navegador, sem XP no ranking.
+
+Contas usam cookies de sessão protegidos e o armazenamento de credenciais do Better Auth. Todas as rotas privadas consultam a sessão no servidor. Alterações de perfil têm uma lista explícita de campos permitidos. A recuperação de senha por e-mail depende de configurar um provedor de envio e não está habilitada nesta versão; não existe reset inseguro por e-mail informado pelo cliente.

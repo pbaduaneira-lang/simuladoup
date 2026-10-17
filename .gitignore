@@ -41,3 +41,12 @@ temp_provas/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local Turso/SQLite databases and test output
+.data/
+*.db
+*.db-shm
+*.db-wal
+__pycache__/
+playwright-report/
+test-results/

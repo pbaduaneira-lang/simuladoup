@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -16,7 +15,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "SimuladoUp",
-  description: "Estudar viciando igual rede social.",
+  description: "Questões do ENEM, explicações e uma rotina de estudo gratuita.",
 };
 
 export default function RootLayout({
@@ -25,14 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={cn("dark", "font-sans", geistSans.variable)}>
-      <body
-        className={cn(
-          "min-h-screen bg-background font-sans antialiased text-foreground",
-          geistSans.variable,
-          geistMono.variable
-        )}
-      >
+    <html lang="pt-BR" className={geistSans.variable}>
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>
     </html>
