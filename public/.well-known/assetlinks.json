@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "br.com.simuladoup.app",
       "sha256_cert_fingerprints": [
-        "B2:1B:82:1A:6E:68:02:27:ED:49:0F:13:D4:D0:46:35:34:E2:22:34:BE:A5:8F:B1:6F:DA:9D:6A:AA:E5:D4:67"
+        "B2:1B:82:1A:6E:68:02:27:ED:49:0F:13:D4:D0:46:35:34:E2:22:34:BE:A5:8F:B1:6F:DA:9D:6A:AA:E5:D4:67",
+        "E6:16:3D:C6:2D:37:9F:19:84:24:6E:05:DB:E9:1D:73:F5:68:65:36:21:4D:26:22:64:95:7A:3B:B5:BC:8C:FD"
       ]
     }
   }
