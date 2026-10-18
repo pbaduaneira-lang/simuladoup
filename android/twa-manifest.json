@@ -1,0 +1,46 @@
+{
+  "packageId": "br.com.simuladoup.app",
+  "host": "www.simuladoup.com.br",
+  "name": "SimuladoUp",
+  "launcherName": "SimuladoUp",
+  "display": "standalone",
+  "themeColor": "#0C131C",
+  "themeColorDark": "#000000",
+  "navigationColor": "#0C131C",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#0C131C",
+  "enableNotifications": false,
+  "startUrl": "/app",
+  "iconUrl": "https://www.simuladoup.com.br/icons/play-store-512.png",
+  "splashScreenFadeOutDuration": 200,
+  "signingKey": {
+    "path": "./signing/simuladoup-upload.jks",
+    "alias": "simuladoup-upload"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "@bubblewrap/core@1.27.0",
+  "webManifestUrl": "https://www.simuladoup.com.br/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 24,
+  "orientation": "any",
+  "fingerprints": [
+    {
+      "value": "B2:1B:82:1A:6E:68:02:27:ED:49:0F:13:D4:D0:46:35:34:E2:22:34:BE:A5:8F:B1:6F:DA:9D:6A:AA:E5:D4:67"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}

@@ -50,3 +50,14 @@ next-env.d.ts
 __pycache__/
 playwright-report/
 test-results/
+
+# Android build products and private signing material
+/android/.gradle/
+/android/**/build/
+/android/local.properties
+/android/signing/
+*.jks
+*.keystore
+*.dpapi
+*.aab
+*.apk

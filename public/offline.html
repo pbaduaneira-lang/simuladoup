@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0c131c" />
+    <title>Sem conexão | SimuladoUp</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #0c131c;
+        color: #f5f7fb;
+        font:
+          16px/1.6 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 460px;
+      }
+      .brand {
+        font-weight: 800;
+        color: #aceed0;
+      }
+      h1 {
+        font-size: 32px;
+        line-height: 1.2;
+      }
+      p {
+        color: #b9c3d2;
+      }
+      button,
+      a {
+        display: inline-block;
+        border-radius: 12px;
+        border: 0;
+        padding: 14px 22px;
+        background: #aceed0;
+        color: #0c131c;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #8bd9ff;
+        outline-offset: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">SimuladoUp</div>
+      <h1>Uma pausa na conexão.</h1>
+      <p>
+        Conecte-se à internet para carregar as questões e continuar sua prática.
+        Esta tela não salva respostas nem envia dados.
+      </p>
+      <button type="button" onclick="location.reload()">
+        Tentar novamente
+      </button>
+      <noscript
+        ><p><a href="/app">Voltar ao início</a></p></noscript
+      >
+    </main>
+  </body>
+</html>

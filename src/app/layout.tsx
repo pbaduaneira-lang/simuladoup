@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -15,6 +16,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "SimuladoUp",
+  icons: { icon: "/icons/play-store-512.png", apple: "/icons/app-192.png" },
   description: "Questões do ENEM, explicações e uma rotina de estudo gratuita.",
 };
 
@@ -26,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={geistSans.variable}>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <RegisterServiceWorker />
         {children}
       </body>
     </html>
