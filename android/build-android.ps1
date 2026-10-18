@@ -17,7 +17,8 @@ try {
   $env:JAVA_HOME = $JavaHome
   $env:ANDROID_HOME = $AndroidSdk
   $env:SIMULADOUP_KEY_PASSWORD = $taskCredential.GetNetworkCredential().Password
-  'sdk.dir=' + $AndroidSdk.Replace('\', '/') | Set-Content -LiteralPath (Join-Path $taskRoot 'local.properties') -Encoding ascii
+  $taskSdkLine = 'sdk.dir=' + $AndroidSdk.Replace('\', '/').Replace(':', '\:') + "`n"
+  [IO.File]::WriteAllText((Join-Path $taskRoot 'local.properties'), $taskSdkLine, [Text.Encoding]::ASCII)
   Push-Location $taskRoot
   try {
     & '.\gradlew.bat' bundleRelease assembleRelease lintRelease --no-daemon --console=plain --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx1536m -Dfile.encoding=UTF-8'
