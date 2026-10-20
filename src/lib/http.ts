@@ -17,12 +17,12 @@ export function assertSameOrigin(req: Request) {
   if (req.headers.get("sec-fetch-site") === "cross-site")
     throw new HttpError(403, "Origem não permitida.");
 }
-export async function jsonBody(req: Request) {
+export async function jsonBody(req: Request, maxLength = 20000) {
   assertSameOrigin(req);
-  if (Number(req.headers.get("content-length") || 0) > 20000)
+  if (Number(req.headers.get("content-length") || 0) > maxLength)
     throw new HttpError(413, "Conteúdo muito longo.");
   const raw = await req.text();
-  if (raw.length > 20000) throw new HttpError(413, "Conteúdo muito longo.");
+  if (raw.length > maxLength) throw new HttpError(413, "Conteúdo muito longo.");
   try {
     const body = JSON.parse(raw);
     if (!body || Array.isArray(body) || typeof body !== "object") throw Error();

@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Copy, ArrowRight, Users, Check, Loader2 } from "lucide-react";
 import type { PublicQuestion } from "@/lib/types";
+import { QuestionContent } from "@/components/QuestionContent";
 interface Battle {
   id: string;
   participant: boolean;
@@ -239,7 +240,7 @@ function BattlePage({ room }: { room: string | null }) {
                   ENEM {q.source.year} · Questão {q.source.number}
                 </span>
               </div>
-              <div className="question-text">{q.enunciado}</div>
+              <QuestionContent question={q} />
               <fieldset
                 className="answer-options"
                 disabled={busy || Boolean(result)}

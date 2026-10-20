@@ -13,6 +13,7 @@ export const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS attempts_user ON attempts(userId, createdAt)`,
   `CREATE TABLE IF NOT EXISTS answers (id TEXT PRIMARY KEY, attemptId TEXT NOT NULL REFERENCES attempts(id), userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, questionId TEXT NOT NULL REFERENCES question_versions(id), questionVersion TEXT NOT NULL, selectedOption INTEGER NOT NULL CHECK(selectedOption BETWEEN 0 AND 4), correta INTEGER NOT NULL CHECK(correta BETWEEN 0 AND 4), acertou INTEGER NOT NULL CHECK(acertou IN (0,1)), tempo INTEGER NOT NULL CHECK(tempo BETWEEN 0 AND 86400), xpAwarded INTEGER NOT NULL DEFAULT 0, date TEXT NOT NULL, createdAt TEXT NOT NULL, UNIQUE(attemptId, questionId))`,
   `CREATE INDEX IF NOT EXISTS answers_user_day ON answers(userId, date, questionId)`,
+  `CREATE INDEX IF NOT EXISTS answers_user_time ON answers(userId, createdAt DESC)`,
   `CREATE TABLE IF NOT EXISTS question_reports (id TEXT PRIMARY KEY, userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, questionId TEXT NOT NULL, questionVersion TEXT NOT NULL, reason TEXT NOT NULL, createdAt TEXT NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS question_likes (userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, questionId TEXT NOT NULL, PRIMARY KEY(userId,questionId))`,
   `CREATE TABLE IF NOT EXISTS question_comments (id TEXT PRIMARY KEY, userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, questionId TEXT NOT NULL, text TEXT NOT NULL, createdAt TEXT NOT NULL)`,

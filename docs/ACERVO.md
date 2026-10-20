@@ -2,14 +2,16 @@
 
 O feed e os desafios utilizam exclusivamente o catálogo aprovado. O banco de versões registra o conteúdo imutável utilizado nas tentativas. Nenhuma cópia de simulado antigo entra na correção.
 
-O catálogo inicial contém 41 questões textuais do ENEM 2022, dia 1, caderno azul 1, aplicação regular. As quatro questões estrangeiras desse lote são de inglês. As cinco alternativas de todas as 41 questões foram comparadas com o lote de referência revisado; os textos completos foram restaurados a partir da prova original. As letras foram comparadas com o gabarito oficial, incluindo a coluna do idioma.
+O catálogo contém 525 questões oficiais de 2022 a 2025. As 41 questões textuais originais conservam seus IDs e versões. As 484 adições usam reproduções dos PDFs oficiais, incluindo as cinco alternativas, figuras, fórmulas e textos compartilhados. Ano, aplicação, dia, caderno, idioma e número identificam a entrada no gabarito. As imagens e os PDFs têm SHA-256 registrado em `src/data/catalogue-provenance.json`.
+
+O estado `APPROVED` atesta a disponibilidade do enunciado, alternativas e vínculo com o gabarito. A disponibilidade de comentário é independente: `explanationStatus: "answer-key-only"` informa que não existe comentário pedagógico revisado. A interface não chama a confirmação da letra de resolução. Não há questões geradas por IA neste lote. A categorização por matéria é editorial; o Inep organiza a prova por áreas.
 
 ## Publicação de novos itens
 
 1. Identificar ano, aplicação, dia, caderno, idioma e número. Inglês e espanhol têm chaves diferentes.
 2. Preservar textos compartilhados, imagens, tabelas, fórmulas e todas as alternativas. Escolher a leitura conforme o layout de cada página. Não recortar automaticamente toda página em duas colunas.
 3. Reconhecer `Anulado`/`Anulada` como estado sem resposta. Falhar se faltar gabarito; jamais preencher A por padrão.
-4. Conferir a alternativa correta pelo texto e pela letra, além da integridade dos distratores e do comando. Fazer revisão pedagógica da explicação.
+4. Conferir a alternativa correta pela reprodução das alternativas e pela letra do gabarito, além da integridade dos distratores e do comando. Só publicar explicação após revisão pedagógica. Se publicar apenas o gabarito, exigir `explanationStatus: "answer-key-only"` e informar essa limitação ao estudante.
 5. Manter `QUARANTINED` até concluir a revisão. Registrar a evidência de conferência. Só depois gerar um novo ID com o hash do conteúdo aprovado.
 6. Atualizar a referência oficial e os testes; executar `npm run catalogue:check`, `npm test` e `npm run build`.
 

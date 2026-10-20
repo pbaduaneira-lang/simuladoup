@@ -1,5 +1,7 @@
 # Verificação da versão 0.2.0
 
+Registro histórico da auditoria de 17/10. Para a ampliação do acervo de 19/10, consulte [a verificação atual](AMPLIACAO-2026-10.md).
+
 Verificação realizada em 17/10/2026, com Node 24 e Next.js 16.4.2.
 
 ## Acervo

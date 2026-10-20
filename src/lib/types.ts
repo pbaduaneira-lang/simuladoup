@@ -4,6 +4,14 @@ export interface PublicQuestion {
   materia: string;
   enunciado: string;
   alternativas: string[];
+  media?: {
+    src: string;
+    width: number;
+    height: number;
+    sha256: string;
+    alt: string;
+  };
+  explanationStatus?: string;
   source: {
     year: number;
     number: number;

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
-  ArrowRight,
   BookOpen,
   Globe,
   ScrollText,
@@ -11,9 +10,11 @@ import {
 } from "lucide-react";
 import { approvedQuestions } from "@/lib/catalogue";
 import { StudyStats } from "@/components/StudyStats";
+import { PracticeSetup } from "@/components/PracticeSetup";
 export default function Dashboard() {
   const qs = approvedQuestions();
   const subjects = [...new Set(qs.map((q) => q.materia))];
+  const years = [...new Set(qs.map((q) => q.source.year))].sort();
   return (
     <main className="page dashboard">
       <div className="page-top">
@@ -35,17 +36,15 @@ export default function Dashboard() {
         <div>
           <span className="eyebrow">SEU MOMENTO DE FOCO</span>
           <h2>
-            Dez questões.
+            {qs.length} questões.
             <br />
             Novas possibilidades.
           </h2>
           <p>
-            Uma seleção de questões revisadas para exercitar o que você sabe e
+            Questões de provas oficiais para exercitar o que você sabe e
             descobrir o que pode melhorar.
           </p>
-          <Link className="button primary" href="/app/feed">
-            Começar minha prática <ArrowRight size={18} />
-          </Link>
+          <PracticeSetup years={years} />
         </div>
         <div className="start-art" aria-hidden="true">
           <BookOpen size={66} />
@@ -84,9 +83,9 @@ export default function Dashboard() {
                 <Icon size={26} />
                 <ArrowUpRight size={19} />
               </div>
-              <h3>{name}</h3>
+              <h3>{name === "Português" ? "Português e Linguagens" : name}</h3>
               <p>
-                {qs.filter((q) => q.materia === name).length} questões revisadas
+                {qs.filter((q) => q.materia === name).length} questões oficiais
               </p>
             </Link>
           );
@@ -95,8 +94,9 @@ export default function Dashboard() {
       <div className="info-strip">
         <ShieldCheck size={21} />
         <p>
-          Acervo inicial: questões textuais do ENEM 2022, com origem e gabarito
-          identificados. Novas matérias entram após revisão.
+          ENEM {years.join(", ")}: provas oficiais com gabaritos do Inep. Sua
+          próxima rodada prioriza questões ainda não respondidas. As anuladas
+          ficam fora da prática.
         </p>
       </div>
       <section className="bottom-cards">

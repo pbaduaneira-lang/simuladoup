@@ -14,18 +14,26 @@ import {
 import { TtsPlayer } from "@/components/TtsPlayer";
 import { FocusTimer } from "@/components/FocusTimer";
 import { authClient } from "@/lib/auth-client";
-import { saveProgress } from "@/lib/local-progress";
+import { saveProgress, readProgress } from "@/lib/local-progress";
+import { QuestionContent } from "@/components/QuestionContent";
 import type { PublicQuestion, AnswerResult } from "@/lib/types";
 function Practice({
   subject,
   simulado,
+  count,
+  year,
   onRestart,
 }: {
   subject: string | null;
   simulado: string | null;
+  count: string | null;
+  year: string | null;
   onRestart: () => void;
 }) {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const [available, setAvailable] = useState(0),
+    [unseen, setUnseen] = useState(0);
+  const userId = session?.user.id;
   const [questions, setQuestions] = useState<PublicQuestion[]>([]),
     [attemptId, setAttemptId] = useState(""),
     [loading, setLoading] = useState(true),
@@ -42,16 +50,30 @@ function Practice({
   const started = useRef(0),
     busy = useRef(false);
   useEffect(() => {
+    if (sessionPending) return;
     const controller = new AbortController();
     const search = new URLSearchParams();
     if (subject) search.set("materia", subject);
     if (simulado) search.set("simulado", simulado);
-    fetch(`/api/questions?${search}`, { signal: controller.signal })
+    if (count) search.set("quantidade", count);
+    if (year) search.set("ano", year);
+    fetch(`/api/questions?${search}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        excluded: readProgress(userId)
+          .map((r) => r.questionId)
+          .filter(Boolean),
+      }),
+      signal: controller.signal,
+    })
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw Error(data.error);
         setQuestions(data.questoes);
         setAttemptId(data.attemptId);
+        setAvailable(data.available);
+        setUnseen(data.unseen);
         started.current = performance.now();
       })
       .catch((e) => {
@@ -62,7 +84,7 @@ function Practice({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [subject, simulado]);
+  }, [subject, simulado, count, year, userId, sessionPending]);
   const q = questions[index];
   async function handleAnswer(option: number, answeredAt: number) {
     if (busy.current || result) return;
@@ -190,8 +212,16 @@ function Practice({
             : "Seu histórico foi registrado neste navegador, quando o armazenamento está disponível."}
         </p>
         <button className="button primary" onClick={onRestart}>
-          <RotateCcw size={17} /> Praticar novamente
+          <RotateCcw size={17} />{" "}
+          {unseen > questions.length
+            ? "Continuar com outras questões"
+            : "Começar outra rodada de revisão"}
         </button>
+        <p className="muted">
+          {available} questões nesta seleção ·{" "}
+          {Math.max(0, unseen - questions.length)} ainda não respondidas no
+          histórico consultado.
+        </p>
         <Link className="text-link" href="/app">
           Escolher outra matéria
         </Link>
@@ -208,6 +238,26 @@ function Practice({
           Questão {index + 1} de {questions.length}
         </span>
       </div>
+      <p className="muted small-text">
+        {available} questões disponíveis nesta seleção.{" "}
+        {unseen
+          ? "Prioridade para as ainda não respondidas."
+          : "Você percorreu esta seleção: hora de revisar!"}
+      </p>
+      <nav className="round-options" aria-label="Tamanho da próxima rodada">
+        Rodadas:{" "}
+        {[5, 10, 20].map((n) => {
+          const search = new URLSearchParams();
+          if (subject) search.set("materia", subject);
+          if (year) search.set("ano", year);
+          search.set("quantidade", String(n));
+          return (
+            <Link key={n} href={`/app/feed?${search}`}>
+              {n} questões
+            </Link>
+          );
+        })}
+      </nav>
       <div
         className="progress-track"
         role="progressbar"
@@ -228,13 +278,17 @@ function Practice({
             <span className="pill purple">{q.materia}</span>
             <span>
               ENEM {q.source.year} · Questão {q.source.number}
-              {q.source.language ? " · Inglês" : ""}
+              {q.source.language === "ingles"
+                ? " · Inglês"
+                : q.source.language === "espanhol"
+                  ? " · Espanhol"
+                  : ""}
             </span>
           </div>
           <h1 className="sr-only">
             Questão {q.source.number} de {q.materia}
           </h1>
-          <div className="question-text">{q.enunciado}</div>
+          <QuestionContent question={q} />
           <fieldset
             className="answer-options"
             disabled={sending || Boolean(result)}
@@ -288,7 +342,9 @@ function Practice({
               <h2>
                 {result.acertou
                   ? "Você acertou."
-                  : "Vamos entender essa resposta."}
+                  : q.explanationStatus === "answer-key-only"
+                    ? "Confira a alternativa oficial."
+                    : "Vamos entender essa resposta."}
               </h2>
               <p>
                 <strong>
@@ -297,7 +353,9 @@ function Practice({
               </p>
               <p>{result.explicacaoIA}</p>
               <p className="muted small-text">
-                Explicação elaborada para estudo. O gabarito é do INEP.
+                {q.explanationStatus === "answer-key-only"
+                  ? "Gabarito oficial disponível. Comentário pedagógico ainda não revisado."
+                  : "Explicação elaborada para estudo. O gabarito é do INEP."}
               </p>
               <TtsPlayer text={result.explicacaoIA} />
               <button className="button primary" onClick={next}>
@@ -377,13 +435,17 @@ function Practice({
 function Feed() {
   const params = useSearchParams(),
     subject = params.get("materia"),
-    simulado = params.get("simulado");
+    simulado = params.get("simulado"),
+    count = params.get("quantidade"),
+    year = params.get("ano");
   const [round, setRound] = useState(0);
   return (
     <Practice
-      key={`${subject}:${simulado}:${round}`}
+      key={`${subject}:${simulado}:${count}:${year}:${round}`}
       subject={subject}
       simulado={simulado}
+      count={count}
+      year={year}
       onRestart={() => setRound((r) => r + 1)}
     />
   );

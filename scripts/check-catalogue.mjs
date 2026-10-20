@@ -19,6 +19,10 @@ const canonical = (value) =>
       : value;
 const ids = new Set(),
   origins = new Set();
+const provenance = JSON.parse(
+  readFileSync(new URL("src/data/catalogue-provenance.json", root), "utf8"),
+);
+const crops = new Map(provenance.crops.map((c) => [c.questionId, c]));
 for (const q of questions) {
   const { id, version, ...content } = q;
   if (
@@ -44,6 +48,46 @@ for (const q of questions) {
     throw Error(`Questão repetida: ${id}`);
   ids.add(id);
   origins.add(origin);
+  if (q.media) {
+    const crop = crops.get(id);
+    if (
+      !/^\/questions\/enem\/[a-z0-9-]+\.webp$/.test(q.media.src) ||
+      !crop ||
+      crop.origin !== origin ||
+      crop.labels !== "ABCDE" ||
+      crop.imageSha256 !== q.media.sha256 ||
+      q.explanationStatus !== "answer-key-only"
+    )
+      throw Error(`Reprodução sem proveniência: ${id}`);
+    const bytes = readFileSync(new URL(`public${q.media.src}`, root));
+    if (createHash("sha256").update(bytes).digest("hex") !== q.media.sha256)
+      throw Error(`Imagem alterada: ${id}`);
+    if (q.media.width < 500 || q.media.height < 100 || !q.media.alt)
+      throw Error(`Imagem incompleta: ${id}`);
+    const pdf = provenance.sources.find(
+      (s) =>
+        s.kind === "PV" &&
+        s.year === source.year &&
+        s.day === source.day &&
+        s.booklet === source.booklet,
+    );
+    if (
+      !pdf ||
+      pdf.sha256 !== crop.pdfSha256 ||
+      source.url !== `${pdf.url}#page=${crop.page}`
+    )
+      throw Error(`Página de origem não confere: ${id}`);
+    if (
+      source.year === 2025 &&
+      source.day === 1 &&
+      source.number >= 6 &&
+      source.number <= 10 &&
+      (crop.segments?.length !== 2 ||
+        crop.segments[0].page !== 6 ||
+        crop.segments[1].page !== 7)
+    )
+      throw Error(`Texto compartilhado ausente: ${id}`);
+  }
   const hash = createHash("sha256")
     .update(JSON.stringify(canonical(content)))
     .digest("hex");

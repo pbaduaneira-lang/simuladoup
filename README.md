@@ -53,7 +53,7 @@ Os testes HTTP iniciam um servidor e um banco SQLite/libSQL local exclusivo para
 
 ## Acervo e segurança
 
-O único acervo servido é `src/data/approved-questions.json`: inicialmente 41 questões textuais de 2022, reconstruídas a partir do PDF original. Cada versão possui origem e hash. Letras e alternativas foram conferidas; explicações são material elaborado para estudo, não resoluções oficiais.
+O único acervo servido é `src/data/approved-questions.json`: 525 questões oficiais do ENEM 2022 a 2025. O lote textual original de 41 questões mantém suas versões; 484 reproduções preservam os textos, imagens, fórmulas e alternativas das provas. Cada versão possui origem e hash. As letras foram conferidas nos oito gabaritos oficiais. Os novos itens têm gabarito e indicam explicitamente a ausência de comentário pedagógico revisado; não se apresenta uma resolução gerada como se fosse oficial. Veja [ampliação e evidências](docs/AMPLIACAO-2026-10.md).
 
 Os arquivos de importação antigos ficam em quarentena. Os scripts antigos de seed e exclusão estão desativados. Veja [Acervo](docs/ACERVO.md), [Migração](docs/MIGRACAO-TURSO.md) e [Verificação](docs/VERIFICACAO.md).
 

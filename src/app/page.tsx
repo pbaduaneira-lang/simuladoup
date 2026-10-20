@@ -33,7 +33,7 @@ export default function Landing() {
             </h1>
             <p>
               Transforme alguns minutos em aprendizado. Pratique com questões do
-              ENEM, confira o gabarito e entenda cada resposta no seu ritmo.
+              ENEM de 2022 a 2025 e confira os gabaritos oficiais no seu ritmo.
             </p>
             <div className="hero-actions">
               <Link className="button primary" href="/app">
@@ -92,7 +92,7 @@ export default function Landing() {
             {
               icon: CheckCircle2,
               title: "Confira e aprenda",
-              text: "Veja a resposta e uma explicação depois de resolver cada questão.",
+              text: "Confira o gabarito oficial após cada resposta e os comentários de estudo, quando disponíveis.",
             },
             {
               icon: Headphones,

@@ -175,7 +175,8 @@ test(
           404,
         );
         assert.equal(
-          (await guest.request("/api/questions?materia=matematica")).status,
+          (await guest.request("/api/questions?materia=materia-inexistente"))
+            .status,
           404,
         );
         assert.equal(
@@ -218,6 +219,135 @@ test(
           assert.equal(profile.status, 200, JSON.stringify(profile.data));
           assert.equal(profile.data.user.name, name);
           assert.equal(profile.data.stats.total, 0);
+        }
+      },
+    );
+    await t.test(
+      "Acervo ampliado, filtros, mídias e seleção sem repetir histórico local",
+      async () => {
+        const catalogue = await guest.request("/api/questions?catalogo=1");
+        assert.ok(catalogue.data.total >= 500);
+        assert.deepEqual(catalogue.data.years, [2022, 2023, 2024, 2025]);
+        for (const quantidade of [5, 10, 20]) {
+          const r = await guest.request(
+            `/api/questions?quantidade=${quantidade}&ano=2024`,
+          );
+          assert.equal(r.status, 200, JSON.stringify(r.data));
+          assert.equal(r.data.questoes.length, quantidade);
+          assert.ok(r.data.questoes.every((q) => q.source.year === 2024));
+        }
+        for (const query of [
+          "quantidade=0",
+          "quantidade=500",
+          "quantidade=abc",
+          "ano=2021",
+          "ano=2024.0",
+        ])
+          assert.equal(
+            (await guest.request(`/api/questions?${query}`)).status,
+            400,
+          );
+        const pool = questions.filter(
+          (q) => q.materia === "Filosofia" && q.source.year === 2024,
+        );
+        const remaining = pool.at(-1);
+        const excluded = pool
+          .filter((q) => q.id !== remaining.id)
+          .map((q) => q.id);
+        const fresh = await guest.request(
+          "/api/questions?materia=Filosofia&ano=2024&quantidade=20",
+          { method: "POST", body: { excluded } },
+        );
+        assert.equal(fresh.status, 200, JSON.stringify(fresh.data));
+        assert.deepEqual(
+          fresh.data.questoes.map((q) => q.id),
+          [remaining.id],
+        );
+        assert.equal(fresh.data.unseen, 1);
+        const review = await guest.request(
+          "/api/questions?materia=Filosofia&ano=2024&quantidade=20",
+          { method: "POST", body: { excluded: pool.map((q) => q.id) } },
+        );
+        assert.equal(review.data.unseen, 0);
+        assert.equal(review.data.questoes.length, pool.length);
+        assert.equal(
+          (
+            await guest.request("/api/questions", {
+              method: "POST",
+              body: { excluded },
+              origin: "https://outro.invalid",
+            })
+          ).status,
+          403,
+        );
+        assert.equal(
+          (
+            await guest.request("/api/questions", {
+              method: "POST",
+              body: { excluded: [{}] },
+            })
+          ).status,
+          400,
+        );
+        const media = fresh.data.questoes[0].media;
+        assert.ok(media);
+        const image = await fetch(base + media.src);
+        assert.equal(image.status, 200);
+        assert.equal(
+          createHash("sha256")
+            .update(Buffer.from(await image.arrayBuffer()))
+            .digest("hex"),
+          media.sha256,
+        );
+        const answer = await guest.request("/api/users/progress", {
+          method: "POST",
+          body: {
+            attemptId: fresh.data.attemptId,
+            questionId: remaining.id,
+            selectedOption: remaining.correta,
+            tempo: 1,
+          },
+        });
+        assert.equal(answer.data.acertou, true);
+        assert.match(
+          answer.data.explicacaoIA,
+          /ainda não possui comentário pedagógico revisado/,
+        );
+      },
+    );
+    await t.test(
+      "Servidor corrige todas as questões ampliadas, com a versão e a letra oficiais",
+      async () => {
+        for (let offset = 0; offset < questions.length; offset += 10) {
+          await Promise.all(
+            questions.slice(offset, offset + 10).map(async (q) => {
+              const body = {
+                attemptId: randomUUID(),
+                questionId: q.id,
+                selectedOption: q.correta,
+                tempo: 1,
+              };
+              const correct = await guest.request("/api/users/progress", {
+                method: "POST",
+                body,
+              });
+              assert.equal(
+                correct.status,
+                200,
+                q.id + JSON.stringify(correct.data),
+              );
+              assert.equal(correct.data.acertou, true, q.id);
+              assert.equal(correct.data.correta, q.correta, q.id);
+              assert.equal(correct.data.questionVersion, q.version, q.id);
+              const wrong = await guest.request("/api/users/progress", {
+                method: "POST",
+                body: { ...body, selectedOption: (q.correta + 1) % 5 },
+              });
+              assert.equal(wrong.status, 200, q.id);
+              assert.equal(wrong.data.acertou, false, q.id);
+              assert.equal(wrong.data.correta, q.correta, q.id);
+            }),
+          );
         }
       },
     );
@@ -307,7 +437,13 @@ test(
     await t.test(
       "Novo estudo da mesma questão no dia não duplica XP; perfil não aceita campos privilegiados",
       async () => {
-        const r = await a.request("/api/questions");
+        const newRound = await a.request("/api/questions?quantidade=20");
+        assert.ok(
+          newRound.data.questoes.every(
+            (q) => !attempt.questoes.some((old) => old.id === q.id),
+          ),
+        );
+        const r = await a.request("/api/questions?simulado=enem-2022-oficial");
         const q = r.data.questoes[0],
           expected = questions.find((c) => c.id === q.id);
         const answer = await a.request("/api/users/progress", {

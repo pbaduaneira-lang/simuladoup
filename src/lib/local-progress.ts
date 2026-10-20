@@ -12,6 +12,9 @@ export function readProgress(userId = "guest"): StudyRecord[] {
               r &&
               typeof r === "object" &&
               typeof r.key === "string" &&
+              typeof r.questionId === "string" &&
+              r.questionId.length <= 128 &&
+              typeof r.materia === "string" &&
               typeof r.acertou === "boolean" &&
               typeof r.createdAt === "string" &&
               Number.isFinite(Date.parse(r.createdAt)),
